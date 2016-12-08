@@ -4,21 +4,34 @@ services:
     ports:
         - "80:80"
     build: ./nginx
-    links:
-        - django_server:web
-    volumes_from:
-        - angular2
-  angular2:
-    build: ./angular2
-    entrypoint: "true"
     volumes:
-        - /usr/share/nginx/angular2
-  django_server:
+      - /home/lee/mysb/docker-nginx-django-angular2/nginx/angular2:/usr/share/nginx/angular2
+    networks: 
+      - front-tier
+
+  web:
     build: ./django_server
     expose: 
         - "8000"
-    links:
-        - redis:redis
+    networks: 
+      - front-tier
+      - back-tier
+    command: /usr/local/bin/gunicorn django_server.wsgi:application -w 2 -b :8000
+
   redis:
-    image: redis
-    #command: "./docker-entrypoint.sh"
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - back-tier 
+    #command: "./docker-entrypoint.sh"django_server:
+
+#angular2 直接由nginx處理，須將angular2 copy to nginx directory.
+volumes: 
+  redisdata:
+
+networks:
+  front-tier:
+  back-tier:
